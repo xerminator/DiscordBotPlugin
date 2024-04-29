@@ -27,14 +27,14 @@ namespace DiscordBot
 {
     public class DiscordBotListener : IEventListener
     {
-        
+
         private readonly ILogger<DiscordBot> _logger;
         private readonly string hostName = "localhost";
         private IEventManager _eventManager;
         private Dictionary<GameCode, GameData> gameDataMap = new();
 
         public DiscordBotListener(ILogger<DiscordBot> logger, IEventManager eventManager)
-        {   
+        {
             _logger = logger;
             _eventManager = eventManager;
             gameDataMap = new Dictionary<GameCode, GameData>();
@@ -59,7 +59,7 @@ namespace DiscordBot
                 if (player.Character == null) return;
                 game.AddPlayer(player);
             }
-            
+
 
             string pattern = "*_match.json";
             string workingDirectory = Environment.CurrentDirectory;
@@ -68,19 +68,17 @@ namespace DiscordBot
             var eventData = new
             {
                 EventName = "GameStart",
-                MatchID = matchFiles.Length - 1,
+                MatchID = matchFiles.Length,
                 GameCode = game.gameCode,
                 Players = game.Players.Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
                 PlayerColors = game.Players.Select(p => p.Character.PlayerInfo.CurrentOutfit.Color).ToList(),
                 Impostors = game.Impostors.Where(p => p.Character.PlayerInfo.IsImpostor).Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
                 Crewmates = game.Crewmates.Where(p => !p.Character.PlayerInfo.IsImpostor).Select(p => p.Character.PlayerInfo.PlayerName).ToList()
-                
+
             };
             string jsonData = JsonSerializer.Serialize(eventData);
             _logger.LogInformation(jsonData);
             SendMessage(jsonData);
-
-            
         }
 
 
@@ -95,7 +93,9 @@ namespace DiscordBot
                 EventName = "MeetingStart",
                 GameCode = game.gameCode,
                 Players = game.Players.Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
-                DeadPlayers = game.Players.Where(p => p.Character.PlayerInfo.IsDead).Select(p => p.Character.PlayerInfo.PlayerName).ToList()
+                DeadPlayers = game.Players.Where(p => p.Character.PlayerInfo.IsDead).Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
+                Impostors = game.Impostors.Where(p => p.Character.PlayerInfo.IsImpostor).Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
+                Crewmates = game.Crewmates.Where(p => !p.Character.PlayerInfo.IsImpostor).Select(p => p.Character.PlayerInfo.PlayerName).ToList()
             };
             string jsonData = JsonSerializer.Serialize(eventData);
             _logger.LogInformation(jsonData);
@@ -113,7 +113,9 @@ namespace DiscordBot
                 EventName = "MeetingEnd",
                 GameCode = game.gameCode,
                 Players = game.Players.Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
-                DeadPlayers = game.Players.Where(p => p.Character.PlayerInfo.IsDead).Select(p => p.Character.PlayerInfo.PlayerName).ToList()
+                DeadPlayers = game.Players.Where(p => p.Character.PlayerInfo.IsDead).Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
+                Impostors = game.Impostors.Where(p => p.Character.PlayerInfo.IsImpostor).Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
+                Crewmates = game.Crewmates.Where(p => !p.Character.PlayerInfo.IsImpostor).Select(p => p.Character.PlayerInfo.PlayerName).ToList()
             };
             string jsonData = JsonSerializer.Serialize(eventData);
             _logger.LogInformation(jsonData);
@@ -134,7 +136,7 @@ namespace DiscordBot
             var eventData = new
             {
                 EventName = "GameEnd",
-                MatchID = matchFiles.Length - 2,
+                MatchID = matchFiles.Length - 1,
                 GameCode = game.gameCode,
                 Players = game.Players.Select(p => p.Character.PlayerInfo.PlayerName).ToList(),
                 PlayerColors = game.Players.Select(p => p.Character.PlayerInfo.CurrentOutfit.Color).ToList(),
@@ -160,7 +162,7 @@ namespace DiscordBot
         private void SendMessage(string message)
         {
             _logger.LogDebug(message);
-                
+
             try
             {
                 // Connect to the server
@@ -186,6 +188,3 @@ namespace DiscordBot
         }
     }
 }
-
-
-//}
